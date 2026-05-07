@@ -15,10 +15,28 @@ const routes = [
     meta: { layout: "AppLayout", requiresAuth: true },
   },
   {
+    path: "/portfolios",
+    name: "Portfolios",
+    component: () => import("@/features/portfolio/views/PortfolioList.vue"),
+    meta: { layout: "AppLayout", requiresAuth: true },
+  },
+  {
+    path: "/resumes",
+    name: "Resumes",
+    component: () => import("@/features/resume/views/ResumeList.vue"),
+    meta: { layout: "AppLayout", requiresAuth: true },
+  },
+  {
+    path: "/profile",
+    name: "Profile",
+    component: () => import("@/features/profile/views/ProfileSettings.vue"),
+    meta: { layout: "AppLayout", requiresAuth: true },
+  },
+  {
     path: "/api-docs",
     name: "ApiDocs",
     component: () => import("@/features/public/views/ApiDocs.vue"),
-    meta: { layout: "AuthLayout" },
+    meta: { layout: "AppLayout", requiresAuth: true },
   },
 ];
 

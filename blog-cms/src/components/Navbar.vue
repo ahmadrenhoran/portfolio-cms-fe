@@ -3,7 +3,7 @@
     <div class="mx-auto flex max-w-6xl items-center justify-between px-4 py-3 sm:px-6">
       
       <!-- Logo section -->
-      <div class="flex items-center gap-3">
+      <router-link to="/" class="flex items-center gap-3">
         <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-stone-800 to-stone-950 text-base font-bold text-white shadow-md ring-1 ring-white/10">
           B
         </div>
@@ -11,19 +11,27 @@
           <span class="font-serif text-lg font-bold tracking-tight text-stone-900 leading-none">Everyone's Blog</span>
           <span class="text-[10px] font-medium uppercase tracking-widest text-stone-500 mt-1">Creator Workspace</span>
         </div>
+      </router-link>
+
+      <!-- Nav Links -->
+      <div class="hidden md:flex items-center gap-1 bg-stone-100/50 p-1 rounded-2xl">
+        <router-link to="/" class="px-4 py-2 text-xs font-bold rounded-xl transition" active-class="bg-white text-stone-900 shadow-sm" :class="$route.name === 'Home' ? '' : 'text-stone-500 hover:text-stone-700'">Blogs</router-link>
+        <router-link to="/portfolios" class="px-4 py-2 text-xs font-bold rounded-xl transition" active-class="bg-white text-stone-900 shadow-sm" :class="$route.name === 'Portfolios' ? '' : 'text-stone-500 hover:text-stone-700'">Portfolios</router-link>
+        <router-link to="/resumes" class="px-4 py-2 text-xs font-bold rounded-xl transition" active-class="bg-white text-stone-900 shadow-sm" :class="$route.name === 'Resumes' ? '' : 'text-stone-500 hover:text-stone-700'">Resumes</router-link>
+        <router-link to="/api-docs" class="px-4 py-2 text-xs font-bold rounded-xl transition" active-class="bg-stone-950 text-white shadow-md" :class="$route.name === 'ApiDocs' ? '' : 'text-stone-500 hover:text-stone-700'">API Docs</router-link>
       </div>
 
       <!-- User section -->
       <div class="flex items-center gap-5">
-        <div class="hidden sm:flex items-center gap-3">
+        <router-link to="/profile" class="hidden sm:flex items-center gap-3 group">
           <div class="flex flex-col items-end">
-            <span class="text-sm font-semibold text-stone-800">{{ userName }}</span>
-            <span class="text-xs text-stone-500">Author</span>
+            <span class="text-sm font-semibold text-stone-800 group-hover:text-stone-950 transition">{{ userName }}</span>
+            <span class="text-xs text-stone-500">Settings</span>
           </div>
-          <div class="h-9 w-9 rounded-full bg-stone-200 border-2 border-white shadow-sm flex items-center justify-center text-stone-600 font-medium">
+          <div class="h-9 w-9 rounded-full bg-stone-200 border-2 border-white shadow-sm flex items-center justify-center text-stone-600 font-medium group-hover:border-stone-300 transition">
             {{ userInitials }}
           </div>
-        </div>
+        </router-link>
         
         <div class="h-6 w-px bg-stone-200 hidden sm:block"></div>
 

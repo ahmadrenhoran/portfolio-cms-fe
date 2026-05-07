@@ -14,6 +14,7 @@ const isLoading = ref(false)
 
 // Form states
 const name = ref('')
+const username = ref('')
 const email = ref('')
 const password = ref('')
 
@@ -38,6 +39,7 @@ const toggleMode = () => {
   isLogin.value = !isLogin.value
   clearError()
   name.value = ''
+  username.value = ''
   email.value = ''
   password.value = ''
 }
@@ -60,10 +62,16 @@ const handleSubmit = async () => {
         throw new Error(res.data.message)
       }
     } else {
-      const res = await register({ name: name.value, email: email.value, password: password.value })
+      const res = await register({ 
+        name: name.value, 
+        username: username.value,
+        email: email.value, 
+        password: password.value 
+      })
       if (res.data.success === true) {
         isLogin.value = true
         name.value = ''
+        username.value = ''
         password.value = ''
         return
       }
@@ -112,6 +120,9 @@ const handleSubmit = async () => {
 
       <form @submit.prevent="handleSubmit" class="relative mt-4 space-y-4">
         <TextField v-if="!isLogin" v-model="name" label="Full Name" placeholder="Nama lengkap" autocomplete="name" :is-error="error.isError"
+          required />
+
+        <TextField v-if="!isLogin" v-model="username" label="Username" placeholder="username" autocomplete="username" :is-error="error.isError"
           required />
 
         <TextField v-model="email" type="email" label="Email" placeholder="nama@email.com" autocomplete="email"

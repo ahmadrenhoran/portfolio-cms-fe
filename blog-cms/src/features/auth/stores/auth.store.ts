@@ -5,6 +5,7 @@ export interface User {
     id: number;
     name: string;
     email: string;
+    username: string | null;
 }
 
 export const useAuthStore = defineStore('auth', () => {
@@ -28,6 +29,16 @@ export const useAuthStore = defineStore('auth', () => {
             accessToken.value = parsedAuth.token ?? null;
         } catch {
             localStorage.removeItem(storageKey);
+        }
+    }
+
+    function setUser(userData: User) {
+        user.value = userData;
+        const storedAuth = localStorage.getItem(storageKey);
+        if (storedAuth) {
+            const parsedAuth = JSON.parse(storedAuth);
+            parsedAuth.user = userData;
+            localStorage.setItem(storageKey, JSON.stringify(parsedAuth));
         }
     }
 

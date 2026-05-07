@@ -1,221 +1,239 @@
 <script setup lang="ts">
-const publicApiBaseUrl = 'https://acaca28-backend.hf.space/api/v1/post/creator'
+import { computed, ref } from 'vue'
+import { useAuthStore } from '@/features/auth/stores/auth.store'
+import Navbar from '@/components/Navbar.vue'
+import { useRouter } from 'vue-router'
 
-const creatorListUrl = `${publicApiBaseUrl}/:userId`
-const creatorDetailUrl = `${publicApiBaseUrl}/:userId/:postId`
+const authStore = useAuthStore()
+const router = useRouter()
 
-const creatorListCurl = `curl "${publicApiBaseUrl}/7"`
-const creatorDetailCurl = `curl "${publicApiBaseUrl}/7/12"`
+const baseUrl = window.location.origin
+const apiBaseUrl = (import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000').replace(/\/$/, '')
+const username = computed(() => authStore.user?.username || 'username')
 
-const creatorListFetch = `const userId = 7
+const publicUrl = computed(() => `${apiBaseUrl}/api/v1/public/${username.value}`)
 
-async function getCreatorPosts() {
-  const response = await fetch(\`https://acaca28-backend.hf.space/api/v1/post/creator/\${userId}\`)
-  const result = await response.json()
+const copiedField = ref<string | null>(null)
 
-  if (!result.success) {
-    throw new Error(result.message || 'Failed to fetch creator posts')
+function copyToClipboard(text: string, field: string) {
+  navigator.clipboard.writeText(text)
+  copiedField.value = field
+  setTimeout(() => {
+    if (copiedField.value === field) copiedField.value = null
+  }, 2000)
+}
+
+const endpoints = [
+  {
+    name: 'Get Portfolios',
+    method: 'GET',
+    path: '/portfolio',
+    description: 'Fetch all portfolios for this user. Supports multi-language description via `?lang=id|en`.',
+    query: [{ name: 'lang', desc: 'id | en (default: en)' }]
+  },
+  {
+    name: 'Get CV / Resume',
+    method: 'GET',
+    path: '/cv',
+    description: 'Fetch the primary or latest resume document.'
+  },
+  {
+    name: 'Get Blog Posts',
+    method: 'GET',
+    path: '/blog',
+    description: 'Fetch all published blog posts.'
+  },
+  {
+    name: 'Get Blog Detail',
+    method: 'GET',
+    path: '/blog/:slug',
+    description: 'Fetch a specific blog post by its slug.'
   }
+]
 
-  return result.data
-}`
+const getCurl = (path: string) => `curl "${publicUrl.value}${path}"`
+const getFetch = (path: string) => `fetch("${publicUrl.value}${path}")
+  .then(res => res.json())
+  .then(data => console.log(data))`
 
-const creatorDetailFetch = `const userId = 7
-const postId = 12
-
-async function getCreatorPostDetail() {
-  const response = await fetch(
-    \`https://acaca28-backend.hf.space/api/v1/post/creator/\${userId}/\${postId}\`
-  )
-  const result = await response.json()
-
-  if (!result.success) {
-    throw new Error(result.message || 'Failed to fetch post detail')
-  }
-
-  return result.data
-}`
-
-const creatorListAxios = `import axios from 'axios'
-
-const userId = 7
-
-async function getCreatorPosts() {
-  const { data } = await axios.get(
-    \`https://acaca28-backend.hf.space/api/v1/post/creator/\${userId}\`
-  )
-
-  return data.data
-}`
-
-const creatorRenderExample = `const container = document.querySelector('#posts')
-const posts = await getCreatorPosts()
-
-container.innerHTML = posts.map(post => \`
-  <article>
-    <h2>\${post.title}</h2>
-    <p>\${post.excerpt || ''}</p>
-    <a href="/blog/\${post.slug}">Baca selengkapnya</a>
-  </article>
-\`).join('')`
-
-const creatorListResponse = `{
-  "success": true,
-  "message": "Posts fetched successfully",
-  "data": [
-    {
-      "id": 12,
-      "title": "Belajar Menulis Blog yang Konsisten",
-      "slug": "belajar-menulis-blog-yang-konsisten",
-      "excerpt": "Tips menjaga ritme menulis agar blog tetap hidup.",
-      "status": "published",
-      "coverImage": "https://cdn.example.com/cover.jpg",
-      "createdAt": "2026-04-30T08:10:00.000Z",
-      "updatedAt": "2026-04-30T08:10:00.000Z"
-    }
-  ]
-}`
-
-const creatorDetailResponse = `{
-  "success": true,
-  "message": "Post fetched successfully",
-  "data": {
-    "id": 12,
-    "title": "Belajar Menulis Blog yang Konsisten",
-    "slug": "belajar-menulis-blog-yang-konsisten",
-    "excerpt": "Tips menjaga ritme menulis agar blog tetap hidup.",
-    "content": "<p>Isi artikel lengkap...</p>",
-    "status": "published",
-    "coverImage": "https://cdn.example.com/cover.jpg",
-    "createdAt": "2026-04-30T08:10:00.000Z",
-    "updatedAt": "2026-04-30T08:10:00.000Z"
-  }
-}`
+function logout() {
+  authStore.logout()
+  router.push('/login')
+}
 </script>
 
 <template>
-  <div class="min-h-screen bg-[#f7f1e8] text-stone-900">
-    <div class="pointer-events-none fixed inset-0 bg-[radial-gradient(circle_at_top_left,rgba(190,154,106,0.16),transparent_24%),radial-gradient(circle_at_bottom_right,rgba(217,119,87,0.1),transparent_24%)]"></div>
+  <div class="min-h-screen bg-stone-950 text-stone-300 selection:bg-amber-400 selection:text-stone-950">
+    <!-- Glitchy background effect -->
+    <div class="fixed inset-0 overflow-hidden pointer-events-none opacity-20">
+      <div class="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,#3e3e3e_0%,transparent_100%)]"></div>
+      <div class="absolute top-0 left-0 w-full h-full bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-40"></div>
+    </div>
 
-    <main class="relative mx-auto max-w-6xl px-4 py-10 sm:px-6">
-      <section class="overflow-hidden rounded-[2rem] border border-stone-200/80 bg-white shadow-[0_24px_80px_rgba(28,25,23,0.1)]">
-        <div class="border-b border-stone-200 bg-[linear-gradient(135deg,#fffaf4_0%,#f7efe5_100%)] px-6 py-8 sm:px-8">
-          <p class="text-xs font-medium uppercase tracking-[0.28em] text-stone-500">Public API Docs</p>
-          <h1 class="mt-3 font-serif text-3xl font-semibold tracking-tight text-stone-950">Creator Posts API</h1>
-          <p class="mt-3 max-w-3xl text-sm leading-7 text-stone-600">
-            Endpoint ini public, tidak membutuhkan auth, dan hanya mengembalikan post dengan status
-            <code>published</code>. Cocok dipakai creator untuk menampilkan daftar blog atau halaman detail post di website mereka sendiri.
-          </p>
+    <Navbar :user-name="authStore.user?.name" @logout="logout" />
+
+    <main class="relative mx-auto max-w-5xl px-4 py-16 sm:px-6">
+      <header class="mb-16">
+        <div class="inline-flex items-center gap-2 rounded-full border border-amber-400/20 bg-amber-400/5 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.2em] text-amber-400 mb-6">
+          <span class="relative flex h-2 w-2">
+            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
+            <span class="relative inline-flex rounded-full h-2 w-2 bg-amber-400"></span>
+          </span>
+          System Status: Operational
         </div>
-
-        <div class="space-y-8 px-6 py-8 sm:px-8">
-          <section class="rounded-[1.5rem] border border-stone-200 bg-[#fcfaf7] p-5">
-            <p class="text-xs font-medium uppercase tracking-[0.22em] text-stone-500">Quick Start</p>
-            <div class="mt-4 grid gap-4 lg:grid-cols-2">
-              <div class="rounded-2xl border border-stone-200 bg-white p-4">
-                <div class="flex items-center gap-3">
-                  <span class="rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-emerald-700">GET</span>
-                  <code class="text-sm text-stone-800">{{ creatorListUrl }}</code>
-                </div>
-                <p class="mt-3 text-sm leading-7 text-stone-600">Ambil semua post published milik creator berdasarkan <code>userId</code>.</p>
-              </div>
-              <div class="rounded-2xl border border-stone-200 bg-white p-4">
-                <div class="flex items-center gap-3">
-                  <span class="rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-emerald-700">GET</span>
-                  <code class="text-sm text-stone-800">{{ creatorDetailUrl }}</code>
-                </div>
-                <p class="mt-3 text-sm leading-7 text-stone-600">Ambil satu post published milik creator berdasarkan <code>userId</code> dan <code>postId</code>.</p>
-              </div>
-            </div>
-          </section>
-
-          <section class="rounded-[1.5rem] border border-stone-200 bg-[#fcfaf7] p-5">
-            <div class="flex flex-wrap items-center gap-3">
-              <span class="rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-emerald-700">GET</span>
-              <code class="text-sm text-stone-800">{{ creatorListUrl }}</code>
-            </div>
-            <p class="mt-4 text-sm leading-7 text-stone-600">Gunakan endpoint ini saat ingin menampilkan halaman daftar artikel creator.</p>
-
-            <div class="mt-5 grid gap-4 lg:grid-cols-2">
-              <div>
-                <p class="text-xs font-medium uppercase tracking-[0.22em] text-stone-500">Path Params</p>
-                <div class="mt-3 rounded-2xl border border-stone-200 bg-white p-4 text-sm text-stone-700">
-                  <div><code>userId</code>: ID creator</div>
-                </div>
-              </div>
-              <div>
-                <p class="text-xs font-medium uppercase tracking-[0.22em] text-stone-500">cURL</p>
-                <pre class="mt-3 overflow-x-auto rounded-2xl bg-stone-950 p-4 text-xs leading-6 text-stone-100"><code>{{ creatorListCurl }}</code></pre>
-              </div>
-            </div>
-
-            <div class="mt-5">
-              <p class="text-xs font-medium uppercase tracking-[0.22em] text-stone-500">Example Response</p>
-              <pre class="mt-3 overflow-x-auto rounded-2xl bg-stone-950 p-4 text-xs leading-6 text-stone-100"><code>{{ creatorListResponse }}</code></pre>
-            </div>
-          </section>
-
-          <section class="rounded-[1.5rem] border border-stone-200 bg-[#fcfaf7] p-5">
-            <div class="flex flex-wrap items-center gap-3">
-              <span class="rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-emerald-700">GET</span>
-              <code class="text-sm text-stone-800">{{ creatorDetailUrl }}</code>
-            </div>
-            <p class="mt-4 text-sm leading-7 text-stone-600">Gunakan endpoint ini saat ingin menampilkan halaman detail satu artikel.</p>
-
-            <div class="mt-5 grid gap-4 lg:grid-cols-2">
-              <div>
-                <p class="text-xs font-medium uppercase tracking-[0.22em] text-stone-500">Path Params</p>
-                <div class="mt-3 rounded-2xl border border-stone-200 bg-white p-4 text-sm text-stone-700">
-                  <div><code>userId</code>: ID creator</div>
-                  <div class="mt-2"><code>postId</code>: ID post</div>
-                </div>
-              </div>
-              <div>
-                <p class="text-xs font-medium uppercase tracking-[0.22em] text-stone-500">cURL</p>
-                <pre class="mt-3 overflow-x-auto rounded-2xl bg-stone-950 p-4 text-xs leading-6 text-stone-100"><code>{{ creatorDetailCurl }}</code></pre>
-              </div>
-            </div>
-
-            <div class="mt-5">
-              <p class="text-xs font-medium uppercase tracking-[0.22em] text-stone-500">Example Response</p>
-              <pre class="mt-3 overflow-x-auto rounded-2xl bg-stone-950 p-4 text-xs leading-6 text-stone-100"><code>{{ creatorDetailResponse }}</code></pre>
-            </div>
-          </section>
-
-          <section class="rounded-[1.5rem] border border-stone-200 bg-[#fcfaf7] p-5">
-            <p class="text-xs font-medium uppercase tracking-[0.22em] text-stone-500">Consume from Website</p>
-            <p class="mt-3 text-sm leading-7 text-stone-600">Contoh paling umum untuk dipakai creator di website mereka adalah `fetch` atau `axios` dari frontend.</p>
-
-            <div class="mt-5 grid gap-5 xl:grid-cols-2">
-              <div>
-                <p class="text-xs font-medium uppercase tracking-[0.22em] text-stone-500">Fetch for Post List</p>
-                <pre class="mt-3 overflow-x-auto rounded-2xl bg-stone-950 p-4 text-xs leading-6 text-stone-100"><code>{{ creatorListFetch }}</code></pre>
-              </div>
-              <div>
-                <p class="text-xs font-medium uppercase tracking-[0.22em] text-stone-500">Fetch for Post Detail</p>
-                <pre class="mt-3 overflow-x-auto rounded-2xl bg-stone-950 p-4 text-xs leading-6 text-stone-100"><code>{{ creatorDetailFetch }}</code></pre>
-              </div>
-            </div>
-
-            <div class="mt-5 grid gap-5 xl:grid-cols-2">
-              <div>
-                <p class="text-xs font-medium uppercase tracking-[0.22em] text-stone-500">Axios Example</p>
-                <pre class="mt-3 overflow-x-auto rounded-2xl bg-stone-950 p-4 text-xs leading-6 text-stone-100"><code>{{ creatorListAxios }}</code></pre>
-              </div>
-              <div>
-                <p class="text-xs font-medium uppercase tracking-[0.22em] text-stone-500">Render Example</p>
-                <pre class="mt-3 overflow-x-auto rounded-2xl bg-stone-950 p-4 text-xs leading-6 text-stone-100"><code>{{ creatorRenderExample }}</code></pre>
-              </div>
-            </div>
-          </section>
-
-          <section class="rounded-[1.5rem] border border-amber-200 bg-amber-50 p-5 text-sm leading-7 text-amber-950">
-            Tidak perlu header auth untuk dua endpoint ini.<br />
-            Jika post belum <code>published</code>, endpoint public ini tidak akan mengembalikannya.<br />
-            Endpoint AI writer <code>POST /api/v1/ai/writing</code> tetap private dan membutuhkan auth.
-          </section>
+        <h1 class="font-serif text-5xl font-bold tracking-tighter text-white sm:text-6xl" :data-text="`API Documentation`">
+          API Documentation
+        </h1>
+        <p class="mt-6 max-w-2xl text-lg leading-relaxed text-stone-400">
+          Build your own portfolio website using our Headless API. Complete control over your data, localized and ready for production.
+        </p>
+        
+        <div class="mt-10 flex flex-col sm:flex-row items-start sm:items-center gap-4 p-4 rounded-2xl border border-white/5 bg-white/5 backdrop-blur-md">
+          <div class="text-xs font-bold uppercase tracking-widest text-stone-500">Base URL</div>
+          <code class="text-amber-300 font-mono text-sm break-all">{{ publicUrl }}</code>
+          <button 
+            @click="copyToClipboard(publicUrl, 'base')"
+            class="ml-auto p-2 rounded-xl bg-white/5 hover:bg-white/10 transition text-stone-400 hover:text-white"
+          >
+            <svg v-if="copiedField !== 'base'" xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>
+            <svg v-else xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" /></svg>
+          </button>
         </div>
-      </section>
+      </header>
+
+      <div class="space-y-20">
+        <section v-for="ep in endpoints" :key="ep.path" class="group">
+          <div class="flex flex-col lg:flex-row gap-10">
+            <div class="flex-1">
+              <div class="flex items-center gap-3 mb-4">
+                <span class="rounded bg-emerald-500/10 px-2 py-0.5 text-xs font-bold text-emerald-400 border border-emerald-500/20">{{ ep.method }}</span>
+                <h3 class="text-xl font-bold text-white">{{ ep.name }}</h3>
+              </div>
+              <p class="text-stone-400 leading-relaxed mb-6">{{ ep.description }}</p>
+              
+              <div v-if="ep.query" class="mb-6">
+                 <h4 class="text-xs font-bold uppercase tracking-widest text-stone-500 mb-3">Query Parameters</h4>
+                 <div class="space-y-2">
+                    <div v-for="q in ep.query" :key="q.name" class="flex items-center gap-4 text-sm">
+                       <code class="text-amber-200">{{ q.name }}</code>
+                       <span class="text-stone-500"> — </span>
+                       <span>{{ q.desc }}</span>
+                    </div>
+                 </div>
+              </div>
+
+              <div class="flex items-center gap-2">
+                <span class="text-xs font-bold uppercase tracking-widest text-stone-600">Endpoint</span>
+                <code class="text-sm text-white">{{ ep.path }}</code>
+              </div>
+            </div>
+
+            <div class="flex-1 max-w-full overflow-hidden">
+               <div class="rounded-2xl border border-white/5 bg-stone-900/50 backdrop-blur-sm overflow-hidden shadow-2xl">
+                  <div class="flex items-center justify-between px-4 py-2 bg-white/5 border-b border-white/5">
+                     <span class="text-[10px] font-bold uppercase tracking-wider text-stone-500">Request Example</span>
+                     <div class="flex gap-2">
+                        <div class="h-2 w-2 rounded-full bg-red-500/20"></div>
+                        <div class="h-2 w-2 rounded-full bg-amber-500/20"></div>
+                        <div class="h-2 w-2 rounded-full bg-emerald-500/20"></div>
+                     </div>
+                  </div>
+                  <div class="p-4 space-y-4">
+                     <div>
+                        <div class="flex items-center justify-between mb-2">
+                           <span class="text-[10px] font-bold text-stone-600">cURL</span>
+                           <button @click="copyToClipboard(getCurl(ep.path), ep.path + 'curl')" class="text-stone-500 hover:text-white transition">
+                              <svg v-if="copiedField !== ep.path + 'curl'" xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>
+                              <span v-else class="text-[10px] text-emerald-400">Copied</span>
+                           </button>
+                        </div>
+                        <pre class="text-[11px] leading-relaxed text-stone-300 overflow-x-auto whitespace-pre-wrap break-all bg-black/30 p-3 rounded-lg border border-white/5"><code>{{ getCurl(ep.path) }}</code></pre>
+                     </div>
+                     <div>
+                        <div class="flex items-center justify-between mb-2">
+                           <span class="text-[10px] font-bold text-stone-600">Fetch API</span>
+                           <button @click="copyToClipboard(getFetch(ep.path), ep.path + 'fetch')" class="text-stone-500 hover:text-white transition">
+                              <svg v-if="copiedField !== ep.path + 'fetch'" xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>
+                              <span v-else class="text-[10px] text-emerald-400">Copied</span>
+                           </button>
+                        </div>
+                        <pre class="text-[11px] leading-relaxed text-amber-100/80 overflow-x-auto whitespace-pre-wrap bg-black/30 p-3 rounded-lg border border-white/5"><code>{{ getFetch(ep.path) }}</code></pre>
+                     </div>
+                  </div>
+               </div>
+            </div>
+          </div>
+          <div class="mt-12 h-px bg-gradient-to-r from-transparent via-white/5 to-transparent"></div>
+        </section>
+      </div>
+
+      <footer class="mt-32 pt-16 border-t border-white/5 text-center">
+         <p class="text-sm text-stone-600 italic">"Design is not just what it looks like and feels like. Design is how it works." — SJ</p>
+      </footer>
     </main>
   </div>
 </template>
+
+<style scoped>
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap');
+
+:deep(body) {
+  font-family: 'Space Grotesk', sans-serif;
+}
+
+.glitch {
+  position: relative;
+  text-shadow: 0.05em 0 0 rgba(255, 0, 0, 0.75),
+    -0.025em -0.05em 0 rgba(0, 255, 0, 0.75),
+    0.025em 0.05em 0 rgba(0, 0, 255, 0.75);
+  animation: glitch 1500ms infinite;
+}
+
+.glitch::before,
+.glitch::after {
+  content: attr(data-text);
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+}
+
+@keyframes glitch {
+  0% {
+    text-shadow: 0.05em 0 0 rgba(255, 0, 0, 0.75),
+      -0.05em -0.025em 0 rgba(0, 255, 0, 0.75),
+      -0.025em 0.05em 0 rgba(0, 0, 255, 0.75);
+  }
+  14% {
+    text-shadow: 0.05em 0 0 rgba(255, 0, 0, 0.75),
+      -0.05em -0.025em 0 rgba(0, 255, 0, 0.75),
+      -0.025em 0.05em 0 rgba(0, 0, 255, 0.75);
+  }
+  15% {
+    text-shadow: -0.05em -0.025em 0 rgba(255, 0, 0, 0.75),
+      0.025em 0.025em 0 rgba(0, 255, 0, 0.75),
+      -0.05em -0.05em 0 rgba(0, 0, 255, 0.75);
+  }
+  49% {
+    text-shadow: -0.05em -0.025em 0 rgba(255, 0, 0, 0.75),
+      0.025em 0.025em 0 rgba(0, 255, 0, 0.75),
+      -0.05em -0.05em 0 rgba(0, 0, 255, 0.75);
+  }
+  50% {
+    text-shadow: 0.025em 0.05em 0 rgba(255, 0, 0, 0.75),
+      0.05em 0 0 rgba(0, 255, 0, 0.75),
+      0 -0.05em 0 rgba(0, 0, 255, 0.75);
+  }
+  99% {
+    text-shadow: 0.025em 0.05em 0 rgba(255, 0, 0, 0.75),
+      0.05em 0 0 rgba(0, 255, 0, 0.75),
+      0 -0.05em 0 rgba(0, 0, 255, 0.75);
+  }
+  100% {
+    text-shadow: -0.025em 0 0 rgba(255, 0, 0, 0.75),
+      -0.025em -0.025em 0 rgba(0, 255, 0, 0.75),
+      -0.025em -0.05em 0 rgba(0, 0, 255, 0.75);
+  }
+}
+</style>
